@@ -3,10 +3,8 @@ Image Compressor Web + API
 
 ### API Usage Guidelines
 
-API URL : http://abc.herokuapp.com/imageCompressor.php
-
+API URL : https://image-compress.herokuapp.com/image-compress.php
 Request : POST
-
 | KEYNAME | TYPE | VALUE |
 | ------ | ------ | ------ |
 | delete_dirs | string | false |
@@ -25,8 +23,8 @@ Request : POST
 
 * [Download heroku cli](https://devcenter.heroku.com/articles/heroku-cli)
 * ```heroku login```
-* ```heroku git:clone -a heroku_app_name```
-* ```cd heroku_app_name```
+* ```heroku git:clone -a image-compress```
+* ```cd image-compress```
 * ```git config --global user.email "email@example.com"```
 * ```git config --global user.name "your_name"```
 * ```git add .```
