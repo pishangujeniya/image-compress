@@ -4,7 +4,9 @@ Image Compressor Web + API
 ### API Usage Guidelines
 
 API URL : https://image-compress.herokuapp.com/image-compress.php
+
 Request : POST
+
 | KEYNAME | TYPE | VALUE |
 | ------ | ------ | ------ |
 | delete_dirs | string | false |
