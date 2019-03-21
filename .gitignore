@@ -1,2 +1,4 @@
 #ignoring composer vendore
 vendor/
+
+.vs/
