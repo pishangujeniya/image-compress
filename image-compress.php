@@ -1,7 +1,22 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+
+$response_array = array();
+$response_array["success"] = false;
+$response_array["error"] = "";
+
+if(!empty($_POST['debug_mode'])){
+    if($_POST['debug_mode'] == "true"){
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+        $response_array['debug_mode'] = true;
+    }else{
+        $response_array['debug_mode'] = false;
+    }
+}
+
+
+ini_set('memory_limit','1023M');
 
 /*
 
@@ -16,21 +31,19 @@ quality : int : 60
 */
 
 
-
-
 $DOWNLOAD_PATH = "dls/";
 $COMPRESSED_PATH = "compressed/";
 $DOMAIN = "http://".$_SERVER['SERVER_NAME'].":".$_SERVER['SERVER_PORT'];
 
-$response_array = array();
-$response_array["success"] = false;
-$response_array["error"] = "";
+
 $validated = false;
 
 $validate_secret_key = "coffee";
 $received_secret_key = "";
 $image_link = "";
 $quality = 60;
+
+
 
 
 if(!empty($_POST['delete_dirs'])){

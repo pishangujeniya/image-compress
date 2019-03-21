@@ -13,6 +13,7 @@ Request : POST
 | secret_key | string | coffee |
 | image_link | string | https://www.google.com/logos/doodles/2019/holi-2019-5084538337230848.2-l.png |
 | quality | int | 60 |
+| debug_mode | string | false |
 
 ### Tools
 
