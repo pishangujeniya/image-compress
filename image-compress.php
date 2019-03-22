@@ -92,19 +92,11 @@ if ($validated) {
     $compressed_file_path = compress_image($DOWNLOAD_PATH . $downloaded_image_file_name, $COMPRESSED_PATH . $downloaded_image_file_name, $quality);
     //Deleting Downloaded File
     unlink($DOWNLOAD_PATH . $downloaded_image_file_name);
+    // if binary file requested then echo image using readfile() else send base_64 encoded in json response.
     if ($want_binary) {
-        //Code for CURLOPT_KEEP_SENDING_ON_ERROR Bianry File
-        $file_array = explode("\n\r", $compressed_file_path, 2);
-        $header_array = explode("\n", $file_array[0]);
-        foreach ($header_array as $header_value) {
-            $header_pieces = explode(':', $header_value);
-            if (count($header_pieces) == 2) {
-                $headers[$header_pieces[0]] = trim($header_pieces[1]);
-            }
-        }
-        header('Content-type: ' . $headers['Content-Type']);
-        header('Content-Disposition: ' . $headers['Content-Disposition']);
-        echo substr($file_array[1], 1);
+        header("content-type: ".mime_content_type($compressed_file_path));
+        header("Content-Disposition: attachment; filename='".$downloaded_image_file_name."'");
+        readfile($compressed_file_path);
     } else {
         $base_64 = convert_to_base_64($compressed_file_path);
         $response_array['base_64'] = $base_64;
@@ -117,6 +109,7 @@ if ($validated) {
 send_response($response_array);
 // Functions
 function send_response($json_to_send) {
+    header('Content-Type: application/json');
     echo json_encode($json_to_send, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
 }
 function makeDir($path) {
