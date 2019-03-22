@@ -1,23 +1,18 @@
 <?php
-
 $response_array = array();
 $response_array["success"] = false;
 $response_array["error"] = "";
-
-if(!empty($_POST['debug_mode'])){
-    if($_POST['debug_mode'] == "true"){
+if (!empty($_POST['debug_mode'])) {
+    if ($_POST['debug_mode'] == "true") {
         ini_set('display_errors', 1);
         ini_set('display_startup_errors', 1);
         error_reporting(E_ALL);
         $response_array['debug_mode'] = true;
-    }else{
+    } else {
         $response_array['debug_mode'] = false;
     }
 }
-
-
-ini_set('memory_limit','1023M');
-
+ini_set('memory_limit', '1023M');
 /*
 
 POST FORMAT ---
@@ -28,44 +23,41 @@ image_link : string : https://www.google.com/logos/doodles/2019/holi-2019-508453
 quality : int : 60
 
 
-*/
-
-
+ */
 $DOWNLOAD_PATH = "dls/";
 $COMPRESSED_PATH = "compressed/";
-$DOMAIN = "http://".$_SERVER['SERVER_NAME'].":".$_SERVER['SERVER_PORT'];
-
-
+$DOMAIN = "http://" . $_SERVER['SERVER_NAME'] . ":" . $_SERVER['SERVER_PORT'];
 $validated = false;
-
 $validate_secret_key = "coffee";
 $received_secret_key = "";
 $image_link = "";
 $quality = 60;
-
-
-
-
-if(!empty($_POST['delete_dirs'])){
-    if($_POST['delete_dirs'] == "true"){
+$want_binary = false;
+if (!empty($_POST['want_binary'])) {
+    if ($_POST['want_binary'] == "true") {
+        $want_binary = true;
+    } else {
+        $want_binary = false;
+    }
+}
+if (!empty($_POST['delete_dirs'])) {
+    if ($_POST['delete_dirs'] == "true") {
         deleteDir($DOWNLOAD_PATH);
         deleteDir($COMPRESSED_PATH);
         $response_array['delete_dirs'] = true;
         $response_array['delete_dirs_success'] = true;
     }
 }
-
-if (!empty($_POST['image_link']) &&
-    !empty($_POST['secret_key'])) {
-    $received_secret_key= trim($_POST['secret_key']);
-    if($received_secret_key == $validate_secret_key){
+if (!empty($_POST['image_link']) && !empty($_POST['secret_key'])) {
+    $received_secret_key = trim($_POST['secret_key']);
+    if ($received_secret_key == $validate_secret_key) {
         $image_link = trim($_POST['image_link']);
-        if(!empty($_POST['quality'])){
+        if (!empty($_POST['quality'])) {
             $quality = (int)$_POST['quality'];
         }
         $validated = true;
-    }else{
-        $response_array['error']= $response_array["error"] . "Wrong Secret Key|";
+    } else {
+        $response_array['error'] = $response_array["error"] . "Wrong Secret Key|";
         $validated = false;
     }
 } else {
@@ -77,7 +69,7 @@ if ($validated == false) {
     send_response($response_array);
     return;
 }
-if ($validated){
+if ($validated) {
     makeDir($DOWNLOAD_PATH);
     makeDir($COMPRESSED_PATH);
     $downloaded_image_file_name = rand(100, 10000) . ".jpg";
@@ -86,45 +78,60 @@ if ($validated){
     $curl = curl_init($image_link);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($curl,CURLOPT_SSL_VERIFYHOST,false);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
     $curl_response = curl_exec($curl);
     $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
     $response_array['image_download_http_code'] = $httpcode;
     if ($httpcode === 200) {
-        $fp = fopen($DOWNLOAD_PATH. $downloaded_image_file_name, "w");
+        $fp = fopen($DOWNLOAD_PATH . $downloaded_image_file_name, "w");
         fwrite($fp, $curl_response);
         fclose($fp);
         $response_array['downloaded'] = true;
     }
     curl_close($curl);
-
-    $compressed_file_path = compress_image($DOWNLOAD_PATH. $downloaded_image_file_name,$COMPRESSED_PATH.$downloaded_image_file_name,$quality);
-
-    $base_64 = convert_to_base_64($compressed_file_path);
-
+    $compressed_file_path = compress_image($DOWNLOAD_PATH . $downloaded_image_file_name, $COMPRESSED_PATH . $downloaded_image_file_name, $quality);
+    //Deleting Downloaded File
+    unlink($DOWNLOAD_PATH . $downloaded_image_file_name);
+    // if binary file requested then echo image using readfile() else send base_64 encoded in json response.
+    if ($want_binary) {
+        header("content-type: ".mime_content_type($compressed_file_path));
+        header("Content-Disposition: attachment; filename='".$downloaded_image_file_name."'");
+        readfile($compressed_file_path);
+    } else {
+        $base_64 = convert_to_base_64($compressed_file_path);
+        $response_array['base_64'] = $base_64;
+    }
+    //Deleting compressed_file
     unlink($compressed_file_path);
-    unlink($DOWNLOAD_PATH. $downloaded_image_file_name);
-
-    $response_array['compressed_image_link'] = $DOMAIN."/".$compressed_file_path;
-    $response_array['base_64'] = $base_64;
+    $response_array['compressed_image_link'] = $DOMAIN . "/" . $compressed_file_path;
     $response_array["success"] = true;
-
 }
 send_response($response_array);
-
 // Functions
 function send_response($json_to_send) {
-    echo json_encode($json_to_send, JSON_UNESCAPED_SLASHES  | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+    header('Content-Type: application/json');
+    echo json_encode($json_to_send, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
 }
-function makeDir($path)
-{
+function makeDir($path) {
     return is_dir($path) || mkdir($path);
 }
 function deleteDir($path) {
-    if(!empty($path) && is_dir($path) ){
-        $dir  = new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS); //upper dirs are not included,otherwise DISASTER HAPPENS :)
+    if (!empty($path) && is_dir($path)) {
+        $dir = new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS); //upper dirs are not included,otherwise DISASTER HAPPENS :)
         $files = new RecursiveIteratorIterator($dir, RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($files as $f) {if (is_file($f)) {unlink($f);} else {$empty_dirs[] = $f;} } if (!empty($empty_dirs)) {foreach ($empty_dirs as $eachDir) {rmdir($eachDir);}} rmdir($path);
+        foreach ($files as $f) {
+            if (is_file($f)) {
+                unlink($f);
+            } else {
+                $empty_dirs[] = $f;
+            }
+        }
+        if (!empty($empty_dirs)) {
+            foreach ($empty_dirs as $eachDir) {
+                rmdir($eachDir);
+            }
+        }
+        rmdir($path);
     }
 }
 function compress_image($source_url, $destination_url, $quality) {
@@ -135,9 +142,10 @@ function compress_image($source_url, $destination_url, $quality) {
     imagejpeg($image, $destination_url, $quality);
     return $destination_url;
 }
-function convert_to_base_64($path){
+function convert_to_base_64($path) {
     $type = pathinfo($path, PATHINFO_EXTENSION);
     $data = file_get_contents($path);
     $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
     return $base64;
 }
+?>
