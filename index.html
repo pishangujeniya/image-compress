@@ -135,7 +135,8 @@
                     secret_key: "coffee",
                     delete_dirs: false
                 }).done(function (data) {
-                    var data_json = JSON.parse(data);
+                    // var data_json = JSON.parse(data);
+                    data_json = data;
                     if (data_json.success == true && data_json.image_download_http_code == 200) {
                         //console.log(data_json);
                         var base_64_data = data_json.base_64;
