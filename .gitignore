@@ -1,4 +1,5 @@
 #ignoring composer vendore
 vendor/
-
+compressed/
+dls/
 .vs/
